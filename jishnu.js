@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         element.addEventListener('mouseleave', () => {
             element.style.animationPlayState = 'running';
-            element.style.transform = 'translateY(0) scale(1)';
+            element.style.transform ='translateY(0) scale(1)';
         });
     });
 });
@@ -419,3 +419,4 @@ document.addEventListener('DOMContentLoaded', () => {
         solutionObserver.observe(solutionsSection);
     }
 });
+
