@@ -380,4 +380,6 @@ document.addEventListener('DOMContentLoaded', () => {
             price.style.color = '#f59e0b';
         });
     });
+    
 });
+
