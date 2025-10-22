@@ -417,5 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const solutionsSection = document.querySelector('.solutions');
     if (solutionsSection) {
         solutionObserver.observe(solutionsSection);
-    }
+    }  
+    
 });
+
+
