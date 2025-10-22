@@ -433,5 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tag.style.background = '#e0e7ff';
             tag.style.color = '#8b5cf6';
         });
+        
     });
 });
+
