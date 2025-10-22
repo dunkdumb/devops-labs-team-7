@@ -1,5 +1,3 @@
-# devops-labs-team-7
-
 # 🚀 Digital Solutions Hub - Team Project
 
 ## 📋 Project Overview
