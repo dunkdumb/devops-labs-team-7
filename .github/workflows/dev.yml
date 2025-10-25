@@ -1,0 +1,115 @@
+name: Development Workflow
+
+on:
+  push:
+    branches: [ develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Code Quality Checks
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: HTML Validation
+        run: |
+          echo "Validating HTML files..."
+          Get-ChildItem public/*.html | ForEach-Object {
+            $file = $_.FullName
+            echo "Checking $file"
+            $content = Get-Content $file -Raw
+            # Check for basic HTML structure
+            if ($content -notmatch "<!DOCTYPE html>") {
+              echo "❌ $file missing DOCTYPE"
+              exit 1
+            }
+            if ($content -notmatch "<html") {
+              echo "❌ $file missing <html> tag"
+              exit 1
+            }
+            if ($content -notmatch "</html>") {
+              echo "❌ $file missing closing </html> tag"
+              exit 1
+            }
+            echo "✅ $file structure is valid"
+          }
+
+      - name: CSS Validation
+        run: |
+          echo "Checking CSS files..."
+          Get-ChildItem public/*.css | ForEach-Object {
+            $file = $_.FullName
+            echo "✅ CSS file found: $($_.Name)"
+            $content = Get-Content $file -Raw
+            # Basic CSS validation
+            if ($content -match "{" -and $content -match "}") {
+              echo "✅ $($_.Name) has valid CSS structure"
+            } else {
+              echo "⚠️  $($_.Name) may have CSS issues"
+            }
+          }
+
+      - name: Link Validation
+        run: |
+          echo "Validating internal links..."
+          Get-ChildItem public/*.html | ForEach-Object {
+            $file = $_.FullName
+            echo "Checking links in $file"
+            $content = Get-Content $file -Raw
+            $matches = [regex]::Matches($content, 'href="([^"]*\.html)"')
+            foreach ($match in $matches) {
+              $link = $match.Groups[1].Value
+              if (Test-Path "public/$link") {
+                echo "✅ Link $link is valid"
+              } else {
+                echo "❌ Broken link: $link in $file"
+                exit 1
+              }
+            }
+          }
+
+  # Preview Deployment
+  preview:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy preview
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEVOPS_LABS_TEAM_7_C6712 }}
+          projectId: devops-labs-team-7-c6712
+          # This will create a preview channel
+
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Preview deployment is ready! Check the Firebase console for the preview URL.'
+            })
+
+  # Development Testing
+  test-dev:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to development
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEVOPS_LABS_TEAM_7_C6712 }}
+          projectId: devops-labs-team-7-c6712
+          channelId: dev  # Development channel

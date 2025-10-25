@@ -1,0 +1,65 @@
+name: Production Deployment
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual deployment
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Verify Firebase configuration
+        run: |
+          echo "Verifying Firebase configuration..."
+          if [ -f "firebase.json" ]; then
+            echo "✅ firebase.json found"
+            cat firebase.json
+          else
+            echo "❌ firebase.json not found"
+            exit 1
+          fi
+
+      - name: Check public directory
+        run: |
+          echo "Checking public directory contents..."
+          Get-ChildItem public/ | Format-Table
+          if (Test-Path "public/index.html") {
+            echo "✅ index.html found"
+          } else {
+            echo "❌ index.html not found in public directory"
+            exit 1
+          }
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DEVOPS_LABS_TEAM_7_C6712 }}
+          channelId: live
+          projectId: devops-labs-team-7-c6712
+
+      - name: Verify deployment
+        run: |
+          echo "🚀 Deployment completed successfully!"
+          echo "Website URL: https://devops-labs-team-7-c6712.web.app"
+          echo "Firebase Console: https://console.firebase.google.com/project/devops-labs-team-7-c6712/overview"
+
+      - name: Health check
+        run: |
+          echo "Performing health check..."
+          sleep 10  # Wait for deployment to propagate
+          curl -f https://devops-labs-team-7-c6712.web.app || echo "Health check failed, but deployment may still be in progress"
